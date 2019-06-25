@@ -1,0 +1,30 @@
+{
+  "name": "pebl-bot",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pebl-bot/pebble.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pebl-bot/pebble/issues"
+  },
+  "homepage": "https://github.com/pebl-bot/pebble#readme",
+  "dependencies": {
+    "@spectacles/brokers": "^0.7.0",
+    "@spectacles/rest": "^0.5.0",
+    "fs-nextra": "^0.4.5",
+    "mongodb": "^3.2.7",
+    "toml": "^3.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.0.0",
+    "eslint-config-aqua": "^6.0.0"
+  }
+}

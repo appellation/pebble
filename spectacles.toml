@@ -1,0 +1,11 @@
+prefix = "+"
+
+[discord]
+token = ""
+	# [discord.shards]
+	# count = 1
+	# ids = [0]
+[broker]
+url = "amqp://localhost"
+	[broker.groups]
+	gateway = "gateway"
