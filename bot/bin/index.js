@@ -13,28 +13,34 @@ const timers = new Amqp(config.broker.groups.timers);
 const restClient = rest(config.discord.token);
 const mongo = new MongoClient(config.database.url, { useNewUrlParser: true });
 
-const client = new Client({
-	gateway,
-	timers,
-	rest: restClient,
-	mongo,
-	config,
-});
-
 gateway.on('close', console.warn);
 timers.on('close', console.warn);
 
-gateway.connect(config.broker.url).then(conn => {
+let client;
+
+mongo.connect().then(() => {
+	client = new Client({
+		gateway,
+		timers,
+		rest: restClient,
+		mongo: mongo.db(config.database.name),
+		config,
+	});
+
+	return gateway.connect(config.broker.url);
+}).then(conn => {
 	gateway.subscribe([...client.listeners.gateway.keys()], (event, data) => {
 		const handler = client.listeners.gateway.get(event);
 		if (handler) handler(client, data);
 	});
 
 	return timers.connect(conn);
-}).then(() => {
-	timers.subscribe([...client.listeners.timers.keys()], (event, data) => {
-		const handler = client.listeners.timers.get(event);
-		if (handler) handler(client, data);
+})
+	.then(() => {
+		timers.subscribe([...client.listeners.timers.keys()], (event, data) => {
+			const handler = client.listeners.timers.get(event);
+			if (handler) handler(client, data);
+		});
 	});
-});
+
 

@@ -1,3 +1,5 @@
+const Context = require('../../structures/Context');
+
 module.exports = async (client, msg) => {
 	let { content } = msg;
 	if (content.startsWith(client.config.prefix)) {
@@ -5,10 +7,10 @@ module.exports = async (client, msg) => {
 	}
 
 	const args = content.split(/\s+/);
-	const cmd = client.listeners.commands.get(args.shift());
+	const cmd = client.commands.get(args.shift());
 	if (cmd) {
 		try {
-			await cmd(client, msg, args);
+			await cmd(new Context(client, msg, args));
 		} catch (err) {
 			console.error(err);
 

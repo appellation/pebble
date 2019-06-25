@@ -19,14 +19,14 @@
   "homepage": "https://github.com/pebl-bot/pebble#readme",
   "dependencies": {
     "@hapi/joi": "^15.1.0",
-    "@spectacles/brokers": "^0.7.0",
+    "@spectacles/brokers": "^0.7.1",
     "@spectacles/rest": "^0.5.0",
     "fs-nextra": "^0.4.5",
     "mongodb": "^3.2.7",
     "toml": "^3.0.0"
   },
   "devDependencies": {
-    "eslint": "^6.0.0",
+    "eslint": "^6.0.1",
     "eslint-config-aqua": "^6.0.0"
   }
 }

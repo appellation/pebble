@@ -1,7 +1,0 @@
-[broker]
-url = "amqp://localhost"
-group = "timers"
-
-[database]
-url = "mongodb+srv://will:lruLxjTn8qnTbuqV@pebble-ldqot.azure.mongodb.net/?retryWrites=true&w=majority"
-name = "pebble"
