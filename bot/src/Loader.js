@@ -2,11 +2,12 @@ const fsn = require('fs-nextra');
 const path = require('path');
 
 class Loader extends Map {
-	constructor(directory) {
+	constructor(directory, depth = Infinity) {
 		super();
 
 		fsn.scan(directory, {
 			filter: (stats, dir) => stats.isFile() && path.extname(dir) === '.js',
+			depthLimit: depth,
 		}).then(res => {
 			for (const loc of res.keys()) {
 				const mod = require(loc);

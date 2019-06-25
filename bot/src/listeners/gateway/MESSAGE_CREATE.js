@@ -5,12 +5,12 @@ module.exports = async (client, msg) => {
 	}
 
 	const args = content.split(/\s+/);
-	const cmd = client.commands.get(args.shift());
+	const cmd = client.listeners.commands.get(args.shift());
 	if (cmd) {
 		try {
 			await cmd(client, msg, args);
-		} catch (e) {
-			console.error(e);
+		} catch (err) {
+			console.error(err);
 
 			try {
 				await client.rest.channels[msg.channel_id].messages.post({ content: 'something went wrong' });

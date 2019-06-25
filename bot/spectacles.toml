@@ -1,0 +1,15 @@
+prefix = "+"
+
+[discord]
+token = "NTkyMDYyNDc3MjUyOTUyMDc1.XRKXhQ.HJKAVlBbMs7PHTSFX67jOBe0eGc"
+	# [discord.shards]
+	# count = 1
+	# ids = [0]
+[broker]
+url = "localhost"
+	[broker.groups]
+	gateway = "gateway"
+	timers = "timers"
+
+[database]
+url = "mongodb+srv://will:lruLxjTn8qnTbuqV@pebble-ldqot.azure.mongodb.net/pebble?retryWrites=true&w=majority"
