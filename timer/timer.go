@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/spec-tacles/go/broker"
@@ -51,11 +52,28 @@ func (m *manager) init() (err error) {
 	return
 }
 
-func (m *manager) queue(evt *event) error {
+func (m *manager) store(evt *event) error {
 	ctx, _ := context.WithTimeout(context.Background(), mongoTimeout)
-	defer m.mongo.DeleteOne(ctx, bson.M{
-		"id": evt.ID,
-	})
+	_, err := m.mongo.InsertOne(ctx, evt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *manager) queue(evt *event) error {
+	log.Printf("Will send %s at %v\n", evt.Context, evt.Expiration)
+	if evt.Expiration.After(time.Now().Add(m.interval)) {
+		return m.store(evt)
+	}
+
+	defer func() {
+		ctx, _ := context.WithTimeout(context.Background(), mongoTimeout)
+		m.mongo.DeleteOne(ctx, bson.M{
+			"id": evt.ID,
+		})
+	}()
 
 	if evt.Expiration.Before(time.Now()) {
 		return m.dispatch(evt)
@@ -71,6 +89,7 @@ func (m *manager) dispatch(evt *event) (err error) {
 		return
 	}
 
+	log.Printf("[complete] %s\n", data)
 	return m.amqp.Publish("DONE", data)
 }
 

@@ -22,6 +22,7 @@ module.exports = async ctx => {
 		channel_id: ctx.msg.channel_id,
 		players: [{ id: ctx.msg.author.id }],
 		creator: ctx.msg.author.id,
+		round: 0,
 	});
 
 	await ctx.client.brokers.timers.publish('START', {

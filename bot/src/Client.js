@@ -6,7 +6,15 @@ class Client {
 	constructor(options) {
 		this.brokers = {
 			gateway: options.gateway,
-			timers: options.timers,
+			get timers() {
+				try {
+					throw new Error('e');
+				} catch (error) {
+					console.log(error);
+				}
+
+				return options.timers;
+			},
 		};
 		this.rest = options.rest;
 		this.mongo = options.mongo;

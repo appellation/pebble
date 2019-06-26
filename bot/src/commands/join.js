@@ -11,8 +11,12 @@ module.exports = async ctx => {
 	}
 
 	await ctx.client.collections.games.updateOne({
+		channel_id: ctx.msg.channel_id,
+	}, {
 		$addToSet: {
 			players: { id: ctx.msg.author.id },
 		},
 	});
+
+	return ctx.reply({ content: 'You have joined the game!' });
 };
