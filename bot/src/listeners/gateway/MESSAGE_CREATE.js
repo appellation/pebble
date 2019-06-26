@@ -1,6 +1,8 @@
 const Context = require('../../structures/Context');
 
 module.exports = async (client, msg) => {
+	if (msg.author.bot) return;
+
 	let { content } = msg;
 	if (content.startsWith(client.config.prefix)) {
 		content = content.slice(client.config.prefix.length).trim();
