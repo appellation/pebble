@@ -1,5 +1,3 @@
-const Timer = require('../../constants/Timer');
-
 module.exports = async (client, data) => {
 	const timer = client.timers.get(data.type);
 	if (timer) {

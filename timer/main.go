@@ -28,7 +28,7 @@ const mongoTimeout = 5 * time.Second
 
 func main() {
 	c := &conf{}
-	_, err := toml.DecodeFile("timers.toml", c)
+	_, err := toml.DecodeFile("timer.toml", c)
 	if err != nil {
 		panic(err)
 	}
