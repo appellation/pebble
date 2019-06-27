@@ -6,6 +6,7 @@ class Context {
 	}
 
 	reply(data) {
+		if (typeof data === 'string') data = { content: data };
 		return this.client.rest.channels[this.msg.channel_id].messages.post(data);
 	}
 }

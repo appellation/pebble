@@ -1,63 +1,62 @@
-{
-    "categories": {
-        "facts": {
-            "id": 1,
-            "descriptive_name": "Fun Facts!",
-            "rule": "Answer with the correct answer",
-            "questions": [
-                { "q": "", "a": "" },
-                {"q": ["How did Alexander the Great solve the puzzle of the Gordian knot? Hint: He probably was smarter than everyone else.", "Cut it with a sword", null] },
-                {"q": ["Republicans dubbed Democrats as what?", "Communism, Corruption, Korea", null] },
-                {"q": ["What sport sparked an entire war between El Salvador and Honduras after a single referee call?", "Football", null] },
-                {"q": ["Washington police officers have an entire hour and a half class learning what?", "Sitting Down", null] },
-                {"q": ["The average person does what 13 times a day?", "Laughs"] },
-                {"q": ["It's technically illegal to do what to a cow in Texas?", "Graffiti", null] },
-                {"q": ["Did you know that _______ kills most fruit flies?", "Constipation", null] }
-            ]
-        },
-        "discord": {
-            "id": 2,
-            "rule": "Answer with the correct answer (or make the funniest responses)",
-            "descriptive_name": "<3 Discord",
-            "questions": [
-                {"q": ["Jun 7 2019 @discordapp says: _____ has no weaknesses.", "Kirby", null]},
-                {"q": ["May 21 2019 @discordapp says: im finally ready to admit this: I have never seen _____", "Shrek", null]},
-                {"q": ["Make a loading screen! The most liked wins", null, null]}
-            ]
-        },
-        "gamers": {
-            "id": 3,
-            "rule": "Answer with the correct answer",
-            "descriptive_name": "GAMERS RISE UP!",
-            "questions": [
-                {"q": ["The creator of what massive franchise got the idea for it while eating pizza?", "Pac-Man", null]},
-                {"q": ["Tomb Raider's Lara Croft Breast size was actually created by accident. One of the developers wanted to increase her breast size but accidently put what?", "150%", null]},
-                {"q": ["A lot of people are wrong. WRONG! Mario actually does what when he hits a block (Spoiler: he doesn't hit it with his head).", "Punches", null]},
-                {"q": ["What game was postponed and delayed several times because it had a hidden butt asset in it?", "Halo", null]},
-                {"q": ["South Korea has a fascinating law for minors. It's illegal to do what if you are 16 and under?", "Playing video games", null]},
-                {"q": ["What Guitar Hero version made more money than the entire band did in album sales?", "Aerosmith", null]},
-                {"q": ["Satoshi Tajiri, the creator of pokemon, got the idea for it from collecting what weird thing?", "Butterflies", null]},
-                {"q": ["Everyone knows Robin Williams was a fan of video games so much he named his daughter Zelda after the princess. But did you know his son's name also comes from a video game? His name is Cody from what video game?", "Final Fight", null]}
-            ]
-        },
-        "cards": {
-            "id": 4,
-            "descriptive_name": "Cards Against Humanity",
-            "rule": "Create the funniest response. The most liked one wins.",
-            "questions": [
-                {"q": ["Lewdcario#0448 on Discord just screams _____", null, null]},
-                {"q": ["I finally found _____ in my life. It's perfect.", null, null]},
-                {"q": ["Pac-Man loves to guzzle _______", null, null]},
-                {"q": ["I love ordering _____ at McDonalds", null, null]},
-                {"q": ["_____ is the best time to _____", null, null]},
-                {"q": ["______ is the best medicine", null, null]},
-                {"q": ["What's a girls best friend?", null, null]},
-                {"q": ["What are my parents hiding from me?", null, null]},
-                {"q": ["_____, it's a trap!", null, null]},
-                {"q": ["What's my secret power?", null, null]},
-                {"q": ["Why am I sticky", null, null]},
-                {"q": ["Why can't I sleep at night?", null, null]}
-            ]
-        }
+[
+    {
+        "name": "facts",
+        "descriptive_name": "Fun Facts!",
+        "rule": "Answer with the correct answer",
+        "questions": [
+            { "q": "How did Alexander the Great solve the puzzle of the Gordian knot? Hint: He probably was smarter than everyone else.", "a": "Cut it with a sword" },
+            { "q": "Republicans dubbed Democrats as what?", "a": "Communism, Corruption, and Korea" },
+            { "q": "What sport sparked an entire war between El Salvador and Honduras after a single referee call?", "a": "Football" },
+            { "q": "Washington police officers have an entire hour and a half class learning what?", "a": "Sitting down" },
+            { "q": "The average person does what 13 times a day?", "a": "Laughs" },
+            { "q": "It's technically illegal to do what to a cow in Texas?", "a": "Graffiti" }
+        ]
+    },
+    {
+        "name": "discord",
+        "rule": "Answer with the correct answer (or make the funniest responses)",
+        "descriptive_name": "<3 Discord",
+        "questions": [
+            { "q": "Why do we wear sunglasses in-doors?", "a": "" },
+            { "q": "Are you kidding me? Light theme on Discord? Really? You realize that your eyes are dying the more you use that? Please stop that. Use _____ instead. It's for your own good.", "a": "" },
+            { "q": "Jun 7 2019 @discordapp says: _____ has no weaknesses.", "a": "Kirby" },
+            { "q": "May 21 2019 @discordapp says: im finally ready to admit this: I have never seen _____", "a": "Shrek" },
+            { "q": "Make us some loading screen text! The most liked one wins!", "a": "" },
+            { "q": "What will cause the next outage?", "a": "" }
+        ]
+    },
+    {
+        "name": "games",
+        "rule": "Answer with the correct answer",
+        "descriptive_name": "GAMERS RISE UP!",
+        "questions": [
+            { "q": "The creator of what massive franchise got the idea for it while eating pizza?", "a": "Pac-man" },
+            { "q": "Tomb Raider's Lara Croft Breast size was actually created by accident. One of the developers wanted to increase her breast size but accidently put what?", "a": "150%" },
+            { "q": "A lot of people are wrong. WRONG! Mario actually does what when he hits a block (Spoiler: he doesn't hit it with his head).", "a": "Pacman" },
+            { "q": "What game was postponed and delayed several times because it had a hidden butt asset in it?", "a": "Halo" },
+            { "q": "South Korea has a fascinating law for minors. It's illegal to do what if you are 16 and under?", "a": "Playing video games" },
+            { "q": "What Guitar Hero version made more money than the entire band did in album sales?", "a": "Aerosmith" },
+            { "q": "Satoshi Tajiri, the creator of pokemon, got the idea for it from collecting what weird thing?", "a": "Butterflies" }
+        ]
+
+    },
+    {
+        "name": "cards",
+        "descriptive_name": "Cards Against Humanity",
+        "rule": "Create the funniest response. The most liked one wins.",
+        "questions": [
+            { "q": "Lewdcario#0448 on Discord just screams _____", "a": "" },
+            { "q": "I finally found _____ in my life. It's perfect.", "a": "" },
+            { "q": "Pac-Man loves to guzzle _______", "a": "" },
+            { "q": "I love ordering _____ at McDonalds", "a": "" },
+            { "q": "_____ is the best time to _____", "a": "" },
+            { "q": "______ is the best medicine", "a": "" },
+            { "q": "What's a girls best friend?", "a": "" },
+            { "q": "What are my parents hiding from me?", "a": "" },
+            { "q": "_____, it's a trap!", "a": "" },
+            { "q": "What's my secret power?", "a": "" },
+            { "q": "Why am I sticky?", "a": "" },
+            { "q": "Why can't I sleep at night?", "a": "" }
+        ]
     }
-}
+]

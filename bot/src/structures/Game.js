@@ -33,6 +33,8 @@ class Game {
 			await this.delete();
 			throw new Error('You must have at least two players to initiate a game.');
 		}
+
+		return this.startRound();
 	}
 
 	async startRound() {
@@ -73,9 +75,9 @@ class Game {
 		return null;
 	}
 
-	addVote(voter, votee) {
+	addVote(voter, answer) {
 		this.coll.updateOne(this.id, {
-			$addToSet: { votes: { [votee]: voter } },
+			$addToSet: { votes: { [voter]: answer } },
 		});
 	}
 }

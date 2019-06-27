@@ -1,4 +1,6 @@
 const path = require('path');
+const Questions = require('./structures/Questions');
+const Timers = require('./structures/Timers');
 const Collections = require('./Collections');
 const Loader = require('./Loader');
 
@@ -6,15 +8,7 @@ class Client {
 	constructor(options) {
 		this.brokers = {
 			gateway: options.gateway,
-			get timers() {
-				try {
-					throw new Error('e');
-				} catch (error) {
-					console.log(error);
-				}
-
-				return options.timers;
-			},
+			timers: options.timers,
 		};
 		this.rest = options.rest;
 		this.mongo = options.mongo;
@@ -24,8 +18,9 @@ class Client {
 			timers: new Loader(path.resolve(__dirname, 'listeners', 'timers')),
 		};
 		this.commands = new Loader(path.resolve(__dirname, 'commands'));
-		this.timers = new Loader(path.resolve(__dirname, 'timers'));
+		this.timers = new Timers(this.brokers.timers, path.resolve(__dirname, 'timers'));
 		this.collections = new Collections(this.mongo);
+		this.questions = new Questions(this.collections.questions);
 	}
 
 	get proposalMessages() {
