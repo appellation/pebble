@@ -5,29 +5,32 @@ const Game = require('../../structures/Game');
 module.exports = async (client, msg) => {
 	if (msg.author.bot) return;
 
-	let { content } = msg;
-	if (content.startsWith(client.config.prefix)) {
-		content = content.slice(client.config.prefix.length).trim();
-	}
-
-	const args = content.split(/\s+/);
-	const cmd = client.commands.get(args.shift());
+	const args = msg.content.split(/\s+/);
 	const ctx = new Context(client, msg, args);
-	if (cmd) {
-		try {
-			await cmd(ctx);
-		} catch (err) {
-			console.error(err);
 
+	if (msg.guild_id) {
+		let cmd = args.shift();
+		if (cmd.startsWith(client.config.prefix)) {
+			cmd = cmd.slice(client.config.prefix.length).trim();
+		} else {
+			return;
+		}
+
+		cmd = client.commands.get(cmd);
+		if (cmd) {
 			try {
-				await ctx.reply('something went horribly wrong');
-			} catch {}
+				await cmd(ctx);
+			} catch (err) {
+				console.error(err);
+
+				try {
+					await ctx.reply('something went horribly wrong');
+				} catch {}
+			}
 		}
 
 		return;
 	}
-
-	if (msg.guild_id) return;
 
 	const gameData = await client.collections.games.findOne({ players: { id: msg.author.id } });
 	if (!gameData) return;
