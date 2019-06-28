@@ -101,7 +101,7 @@ class Game {
 		await this.setStatus(Status.AWAITING_VOTES);
 
 		return this.send({
-			content: `Everyone has ${seconds} seconds to vote for the answer!`,
+			content: `Everyone has **${seconds} seconds** to vote for the answer!`,
 			embed: {
 				fields: Object.values(this.data.answers)
 					.map((answer, i) => ({
@@ -123,7 +123,8 @@ class Game {
 							name: `${i === 0 ? '🎉 ' : ''}Votes: ${answer.voters.length}`,
 							value: answer.content,
 							inline: true,
-						})),
+						}))
+						.slice(0, 25),
 				},
 			});
 			await this.collection.updateOne(this._id, {
@@ -166,7 +167,7 @@ class Game {
 		}
 
 		return this.send({
-			content: `You have ${this.constructor.ANSWER_TIME / 1000} seconds to answer!`,
+			content: `You have **${this.constructor.ANSWER_TIME / 1000} seconds** to answer!`,
 			embed,
 		});
 	}
@@ -174,11 +175,11 @@ class Game {
 	async handleAnswer(ctx) {
 		const added = await this.addAnswer(ctx.msg.author.id, ctx.msg.content);
 		if (added.modifiedCount) {
-			return ctx.reply(`Updated your answer! Back to the game: ${this.channelMention}`);
-		}
+			if (this.answerCount >= this.data.players.length) {
+				await this.startVoting();
+			}
 
-		if (this.answerCount >= this.data.players.length) {
-			await this.startVoting();
+			return ctx.reply(`Updated your answer! Back to the game: ${this.channelMention}`);
 		}
 
 		return ctx.reply(`Nice! Back to the game: ${this.channelMention}`);
@@ -192,6 +193,10 @@ class Game {
 
 		const added = await this.addVote(ctx.msg.author.id, Object.keys(this.data.answers)[index - 1]);
 		if (added.modifiedCount) {
+			if (this.voteCount >= this.data.players.length) {
+				await this.endRound();
+			}
+
 			return ctx.reply(`Updated your vote! Back to the game: ${this.channelMention}`);
 		}
 
