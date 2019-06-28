@@ -23,7 +23,7 @@ class Game {
 	}
 
 	get _id() {
-		return { _id: this.id };
+		return { _id: this.objectID };
 	}
 
 	get objectID() {
@@ -38,12 +38,18 @@ class Game {
 		return this.client.rest.channels[this.data.channel_id];
 	}
 
+	get channelMention() {
+		return `<#${this.data.channel_id}>`;
+	}
+
 	get voteCount() {
-		return Object.values(this.data.answers || []).reduce((acc, answer) => acc + answer.voters.length, 0);
+		if (this.data.answers) return Object.values(this.data.answers).reduce((acc, answer) => acc + answer.voters.length, 0);
+		return 0;
 	}
 
 	get answerCount() {
-		return Object.keys(this.data.answers || []).length;
+		if (this.data.answers) return Object.keys(this.data.answers).length;
+		return 0;
 	}
 
 	delete() {
@@ -99,7 +105,7 @@ class Game {
 			embed: {
 				fields: Object.values(this.data.answers)
 					.map((answer, i) => ({
-						name: i.toString(),
+						name: (i + 1).toString(),
 						value: answer.content,
 						inline: true,
 					})),
@@ -108,20 +114,22 @@ class Game {
 	}
 
 	async endRound() {
-		await this.send({
-			embed: {
-				fields: Object.values(this.data.answers || {})
-					.sort((a, b) => a.voters.length - b.voters.length)
-					.map((answer, i) => ({
-						name: `${i === 0 ? '🎉 ' : ''}Votes: ${answer.voters.length}`,
-						value: answer.content,
-						inline: true,
-					})),
-			},
-		});
-		await this.collection.updateOne(this._id, {
-			$inc: Object.fromEntries(Object.entries(this.data.answers).map((id, answer) => [id, answer.voters.length])),
-		});
+		if (this.data.answers) {
+			await this.send({
+				embed: {
+					fields: Object.values(this.data.answers)
+						.sort((a, b) => a.voters.length - b.voters.length)
+						.map((answer, i) => ({
+							name: `${i === 0 ? '🎉 ' : ''}Votes: ${answer.voters.length}`,
+							value: answer.content,
+							inline: true,
+						})),
+				},
+			});
+			await this.collection.updateOne(this._id, {
+				$inc: Object.fromEntries(Object.entries(this.data.answers).map(([id, answer]) => [id, answer.voters.length])),
+			});
+		}
 		return this.startRound();
 	}
 
@@ -129,17 +137,20 @@ class Game {
 		const res = await this.collection.updateOne(this._id, {
 			$set: { [`answers.${user}`]: { content, voters: [] } },
 		});
-		if (res.modifiedCount === 0) return;
+		if (res.modifiedCount === 0) return res;
 
-		if (this.answerCount === this.data.players.length) return this.startVoting();
+		if (this.answerCount === this.data.players.length) await this.startVoting();
+		return res;
 	}
 
 	async addVote(voter, votee) {
-		await this.collection.updateOne(this._id, {
+		const res = await this.collection.updateOne(this._id, {
 			$addToSet: { [`answers.${votee}.voters`]: voter },
 		});
+		if (res.modifiedCount === 0) return res;
 
-		if (this.voteCount === this.data.players.length) return this.endRound();
+		if (this.voteCount === this.data.players.length) await this.endRound();
+		return res;
 	}
 
 	async postQuestion() {
@@ -174,12 +185,12 @@ class Game {
 	}
 
 	async handleVote(ctx) {
-		const index = parseInt(ctx.content, 10);
-		if (isNaN(index) || index > this.data.answers.length || index < 1) {
-			return ctx.reply('Please give a valid answer number to vote for!');
+		const index = parseInt(ctx.msg.content, 10);
+		if (isNaN(index) || index > this.answerCount || index < 1) {
+			return ctx.reply(`Please give a number between 1 and ${this.answerCount}!`);
 		}
 
-		const added = await this.addVote(ctx.msg.author.id, Object.keys(this.data.answers)[index]);
+		const added = await this.addVote(ctx.msg.author.id, Object.keys(this.data.answers)[index - 1]);
 		if (added.modifiedCount) {
 			return ctx.reply(`Updated your vote! Back to the game: ${this.channelMention}`);
 		}
@@ -189,8 +200,7 @@ class Game {
 
 	async stop() {
 		// TODO: end game.
-		await this.setStatus(Status.ENDED);
-		return this.send(`Game ended! 😦 Type \`${this.client.config.prefix}start\` to start a new one.`);
+		await this.delete();
 	}
 
 	send(data) {
