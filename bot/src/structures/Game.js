@@ -9,19 +9,25 @@ class Game {
 
 	constructor(client, id) {
 		this.client = client;
+
 		if (typeof id === 'object') {
-			this.id = new ObjectID(id._id);
+			this.id = id._id;
 			this.data = id;
 		} else {
-			this.id = new ObjectID(id);
+			this.id = id;
+			return this.collection.findOne(this.objectID).then(data => {
+				this.data = data;
+				return this;
+			});
 		}
 	}
 
-	then(res, rej) {
-		return this.collection.findOne(this.id).then(data => {
-			this.data = data;
-			res(this);
-		}, rej);
+	get _id() {
+		return { _id: this.id };
+	}
+
+	get objectID() {
+		return new ObjectID(this.id);
 	}
 
 	get collection() {
@@ -32,20 +38,24 @@ class Game {
 		return this.client.rest.channels[this.data.channel_id];
 	}
 
+	get voteCount() {
+		return Object.values(this.data.answers || []).reduce((acc, answer) => acc + answer.voters.length, 0);
+	}
+
+	get answerCount() {
+		return Object.keys(this.data.answers || []).length;
+	}
+
 	delete() {
-		return this.collection.deleteOne(this.id);
+		return this.collection.deleteOne(this._id);
 	}
 
 	setStatus(status, query) {
-		return this.collection.updateOne({ _id: this.id }, { $set: { status }, ...query });
-	}
-
-	get starting() {
-		return this.data.status === Status.STARTING;
+		return this.collection.updateOne(this._id, { $set: { status }, ...query });
 	}
 
 	async start() {
-		if (!this.starting) return this.send(`A game is already running in <#${this.data.channel_id}>`);
+		if (this.data.status !== Status.STARTING) return this.send(`A game is already running in <#${this.data.channel_id}>`);
 
 		if (this.data.players.length < 2) {
 			await this.delete();
@@ -58,38 +68,78 @@ class Game {
 	async startRound() {
 		await this.client.timers.set(this.constructor.ANSWER_TIME, {
 			type: Timer.RESPONSE_TIMEOUT,
-			round: this.data.round,
-			id: this.id.str,
+			round: this.data.round + 1,
+			id: this.id,
 		});
 		await this.postQuestion(this.data.category);
 
 		return this.setStatus(Status.AWAITING_RESPONSES, {
 			$unset: { answers: '' },
+			$inc: { round: 1 },
 		});
 	}
 
 	async startVoting() {
-		const seconds = (Object.keys(this.data.answers).length * 4) + 5;
+		if (this.answerCount === 0) {
+			await this.send('No answers were submitted this round!');
+
+			return this.endRound();
+		}
+
+		const seconds = (this.answerCount * 4) + 5;
 		await this.client.timers.set(seconds * 1000, {
-			type: Timer.RESPONSE_TIMEOUT,
+			type: Timer.VOTE_TIMEOUT,
 			round: this.data.round,
-			id: this.id.str,
+			id: this.id,
 		});
 		await this.setStatus(Status.AWAITING_VOTES);
 
-		return this.send(`Everyone has ${seconds} seconds to vote for the answer!`);
-	}
-
-	addAnswer(user, content) {
-		return this.collection.updateOne(this.id, {
-			$set: { [`answers.${user}`]: { content } },
+		return this.send({
+			content: `Everyone has ${seconds} seconds to vote for the answer!`,
+			embed: {
+				fields: Object.values(this.data.answers)
+					.map((answer, i) => ({
+						name: i.toString(),
+						value: answer.content,
+						inline: true,
+					})),
+			},
 		});
 	}
 
-	addVote(voter, votee) {
-		return this.collection.updateOne(this.id, {
+	async endRound() {
+		await this.send({
+			embed: {
+				fields: Object.values(this.data.answers || {})
+					.sort((a, b) => a.voters.length - b.voters.length)
+					.map((answer, i) => ({
+						name: `${i === 0 ? '🎉 ' : ''}Votes: ${answer.voters.length}`,
+						value: answer.content,
+						inline: true,
+					})),
+			},
+		});
+		await this.collection.updateOne(this._id, {
+			$inc: Object.fromEntries(Object.entries(this.data.answers).map((id, answer) => [id, answer.voters.length])),
+		});
+		return this.startRound();
+	}
+
+	async addAnswer(user, content) {
+		const res = await this.collection.updateOne(this._id, {
+			$set: { [`answers.${user}`]: { content, voters: [] } },
+		});
+		if (res.modifiedCount === 0) return;
+
+		if (this.answerCount === this.data.players.length) return this.startVoting();
+	}
+
+	async addVote(voter, votee) {
+		await this.collection.updateOne(this._id, {
 			$addToSet: { [`answers.${votee}.voters`]: voter },
 		});
+
+		if (this.voteCount === this.data.players.length) return this.endRound();
 	}
 
 	async postQuestion() {
@@ -111,12 +161,12 @@ class Game {
 	}
 
 	async handleAnswer(ctx) {
-		const added = await this.addAnswer(ctx.author.id, ctx.content);
+		const added = await this.addAnswer(ctx.msg.author.id, ctx.msg.content);
 		if (added.modifiedCount) {
 			return ctx.reply(`Updated your answer! Back to the game: ${this.channelMention}`);
 		}
 
-		if (Object.keys(this.data.answers).length >= this.data.players.length) {
+		if (this.answerCount >= this.data.players.length) {
 			await this.startVoting();
 		}
 
@@ -129,7 +179,7 @@ class Game {
 			return ctx.reply('Please give a valid answer number to vote for!');
 		}
 
-		const added = await this.addVote(ctx.author.id, index - 1);
+		const added = await this.addVote(ctx.msg.author.id, Object.keys(this.data.answers)[index]);
 		if (added.modifiedCount) {
 			return ctx.reply(`Updated your vote! Back to the game: ${this.channelMention}`);
 		}

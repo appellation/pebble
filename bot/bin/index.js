@@ -31,7 +31,13 @@ mongo.connect().then(() => {
 }).then(conn => {
 	gateway.subscribe([...client.listeners.gateway.keys()], (event, data) => {
 		const handler = client.listeners.gateway.get(event);
-		if (handler) handler(client, data);
+		if (handler) {
+			try {
+				handler(client, data);
+			} catch (err) {
+				console.error(err);
+			}
+		}
 	});
 
 	return timers.connect(conn);

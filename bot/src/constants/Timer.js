@@ -2,4 +2,5 @@ module.exports = {
 	GAME_START: 0,
 	VOTE_COUNT: 1,
 	RESPONSE_TIMEOUT: 2,
+	VOTE_TIMEOUT: 3,
 };

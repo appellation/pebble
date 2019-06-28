@@ -1,10 +1,11 @@
 const Timer = require('../../constants/Timer');
+const keys = Object.keys(Timer);
 
 module.exports = async (client, data) => {
-	const type = Object.entries(Timer).find(([, v]) => v === data.context.type);
+	const type = keys[data.context.type];
 	if (!type) return;
 
-	const timer = client.timers.handlers.get(type[0]);
+	const timer = client.timers.handlers.get(type);
 	if (timer) {
 		try {
 			await timer(client, data);

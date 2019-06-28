@@ -3,6 +3,6 @@ module.exports = {
 		STARTING: 0,
 		AWAITING_RESPONSES: 1,
 		AWAITING_VOTES: 2,
-		ENDED: 3,
+		// ENDED: 3,
 	},
 };
