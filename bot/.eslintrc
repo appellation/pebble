@@ -1,5 +1,7 @@
 {
-	"extends": "aqua/node",
+	"extends": [
+		"aqua/node"
+	],
 	"rules": {
 		"comma-dangle": ["error", "always-multiline"]
 	}

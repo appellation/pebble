@@ -5,9 +5,7 @@ const Colors = require('../constants/Colors');
 module.exports = async ctx => {
 	const categories = ctx.args.shift().toLowerCase().split(',');
 	if (!categories.every(Categories.has)) {
-		return ctx.reply({
-			content: `Invalid: ${categories.filter(Categories.has).join(', ')}`,
-		});
+		return ctx.reply(`Invalid: ${categories.filter(Categories.has).join(', ')}\nAvailable: ${[...Categories.values()].join(', ')}`);
 	}
 
 	const res = await ctx.client.collections.questions.insertOne({

@@ -1,16 +1,21 @@
 const { Status } = require('../constants/Question');
 
 class Questions {
-	constructor(coll) {
-		this.coll = coll;
+	constructor(collection) {
+		this.collection = collection;
 	}
 
-	random(categories = []) {
-		return this.coll.aggregate([
+	random(category) {
+		return this.collection.aggregate([
+			{ $match: { name: category } },
+			{ $unwind: '$questions' },
+			{ $replaceRoot: { newRoot: '$questions' } },
 			{
 				$match: {
-					status: Status.APPROVED,
-					categories: { $in: categories || [] },
+					$or: [
+						{ status: Status.APPROVED },
+						{ status: null },
+					],
 				},
 			},
 			{ $sample: { size: 1 } },
