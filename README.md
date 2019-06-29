@@ -17,7 +17,7 @@ https://discordapp.com/api/oauth2/authorize?client_id=592062477252952075&permiss
 | start | Starts the game in your channel if you don't want to wait 2 minutes. Can only be used by the game creator. |
 | join | Joins a game in your channel. You can use this at any time. |
 | stop | Ends the game that's running in your channel. Can only be used by the game creator. |
-| submit | Submits a question and answer (optional, "|" seperated) that will be decided worthy by Pebble's members. |
+| submit | Submits a question and answer (optional, "\|" seperated) that will be decided worthy by Pebble's members. |
 
 ### Contributors
 - appellation#7852
