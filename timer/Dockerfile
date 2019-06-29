@@ -8,10 +8,12 @@ ADD go.mod go.sum ./
 RUN go mod download
 RUN go mod verify
 ADD . .
-RUN go build -o /usr/timer/bin/timer
+RUN GOOS=linux GOARCH=amd64 go build -o /usr/timer/bin/timer
 
 # Runner
-FROM scratch
+FROM alpine
+WORKDIR /usr/sbin
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=build /usr/timer/bin/timer /usr/timer/bin/timer
-ENTRYPOINT ["/usr/timer/bin/timer"]
+COPY --from=build /usr/timer/bin/timer /usr/sbin/timer
+COPY --from=build /usr/timer/timer.toml /usr/sbin/
+ENTRYPOINT ["/usr/sbin/timer"]

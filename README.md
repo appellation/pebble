@@ -1,6 +1,6 @@
 # Pebble
 
-A Discord bot that allows you to play fibbage-style games with other people in your Discord server.
+A Discord bot that allows you to play fibbage-esque games with other people in your Discord server.
 
 ## Installation
 
@@ -15,3 +15,8 @@ A Discord bot that allows you to play fibbage-style games with other people in y
 | start | Starts the game in your channel if you don't want to wait 2 minutes. Can only be used by the game creator. |
 | join | Joins a game in your channel. You can use this at any time. |
 | stop | Ends the game that's running in your channel. Can only be used by the game creator. |
+
+### Contributors
+- appellation#7852
+- Dim#4657
+- nomsy#2000

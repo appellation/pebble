@@ -6,6 +6,5 @@ module.exports = async ctx => {
 	if (data.creator !== ctx.msg.author.id) return ctx.reply(`Nice try, but only <@${data.creator}> can end this game.`);
 
 	const game = new Game(ctx.client, data);
-	await game.stop();
-	return ctx.reply('Stopped the game. gg :)');
+	return game.stop();
 };

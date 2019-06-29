@@ -3,7 +3,7 @@ const { Status } = require('../../constants/Game');
 const Game = require('../../structures/Game');
 
 module.exports = async (client, msg) => {
-	if (msg.author.bot) return;
+	if (msg.author.bot || !msg.content) return;
 
 	const args = msg.content.split(/\s+/);
 	const ctx = new Context(client, msg, args);
@@ -32,7 +32,7 @@ module.exports = async (client, msg) => {
 		return;
 	}
 
-	const gameData = await client.collections.games.findOne({ players: { id: msg.author.id } });
+	const gameData = await client.collections.games.findOne({ [`players.${msg.author.id}`]: { $exists: true } });
 	if (!gameData) return;
 
 	const game = new Game(client, gameData);

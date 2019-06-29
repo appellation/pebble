@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -19,7 +20,7 @@ type conf struct {
 		Name string
 	}
 	Broker struct {
-		URL string
+		URL   string
 		Group string
 	}
 }
@@ -48,24 +49,21 @@ func main() {
 			panic(err)
 		}
 
-		ctx, _ := context.WithTimeout(context.Background(), mongoTimeout)
-		if _, err := collection.InsertOne(ctx, req); err != nil {
-			panic(err)
-		}
-
 		if err := mgr.queue(req); err != nil {
 			panic(err)
 		}
 	})
-	mgr = &manager{amqp, collection, 5 * time.Minute}
+
+	if err = amqp.Connect(c.Broker.URL); err != nil {
+		panic(err)
+	}
+
+	mgr = &manager{amqp, collection, time.Time{}, 1 * time.Minute}
 	if err = mgr.init(); err != nil {
 		panic(err)
 	}
 
 	go mgr.poll()
-
-	if err = amqp.Connect(c.Broker.URL); err != nil {
-		panic(err)
-	}
+	log.Println()
 	amqp.Subscribe("START")
 }

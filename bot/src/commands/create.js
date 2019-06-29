@@ -1,6 +1,5 @@
 const { Status } = require('../constants/Game');
 const Timer = require('../constants/Timer');
-const join = require('./join');
 
 module.exports = async ctx => {
 	const ongoing = await ctx.client.collections.games.findOne({
@@ -10,16 +9,14 @@ module.exports = async ctx => {
 		],
 	});
 	if (ongoing) {
-		if (ongoing.channel_id === ctx.msg.channel_id) return join(ctx);
 		return ctx.reply(`You are already playing a game in <#${ongoing.channel_id}>!`);
 	}
 
 	const res = await ctx.client.collections.games.insertOne({
 		status: Status.STARTING,
 		channel_id: ctx.msg.channel_id,
-		players: [{ id: ctx.msg.author.id }],
+		players: { [ctx.msg.author.id]: { points: 0 } },
 		creator: ctx.msg.author.id,
-		category: ctx.args[0],
 		round: 0,
 	});
 

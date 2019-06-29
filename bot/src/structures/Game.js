@@ -1,6 +1,9 @@
 const { ObjectID } = require('mongodb');
 const { Status } = require('../constants/Game');
+const Colors = require('../constants/Colors');
 const Timer = require('../constants/Timer');
+const SYSTEM = 'SYSTEM';
+
 
 class Game {
 	static get ANSWER_TIME() {
@@ -15,10 +18,7 @@ class Game {
 			this.data = id;
 		} else {
 			this.id = id;
-			return this.collection.findOne(this.objectID).then(data => {
-				this.data = data;
-				return this;
-			});
+			return this.sync().then(() => this);
 		}
 	}
 
@@ -42,28 +42,39 @@ class Game {
 		return `<#${this.data.channel_id}>`;
 	}
 
+	get playerCount() {
+		return Object.keys(this.data.players).length;
+	}
+
 	get voteCount() {
-		if (this.data.answers) return Object.values(this.data.answers).reduce((acc, answer) => acc + answer.voters.length, 0);
+		if (this.data.voters) return Object.keys(this.data.voters).length;
 		return 0;
 	}
 
-	get answerCount() {
-		if (this.data.answers) return Object.keys(this.data.answers).length;
+	get voteCounts() {
+		return Object.values(this.data.voters || {}).reduce((acc, votee) => {
+			acc[votee] = (acc[votee] || 0) + 1;
+			return acc;
+		}, {});
+	}
+
+	answerCount(filterSystem = true) {
+		if (this.data.answers) return Object.keys(this.data.answers).length - (this.data.answers[SYSTEM] && filterSystem ? 1 : 0);
 		return 0;
+	}
+
+	async sync() {
+		this.data = await this.collection.findOne(this.objectID);
 	}
 
 	delete() {
 		return this.collection.deleteOne(this._id);
 	}
 
-	setStatus(status, query) {
-		return this.collection.updateOne(this._id, { $set: { status }, ...query });
-	}
-
 	async start() {
 		if (this.data.status !== Status.STARTING) return this.send(`A game is already running in <#${this.data.channel_id}>`);
 
-		if (this.data.players.length < 2) {
+		if (this.playerCount < 2) {
 			await this.delete();
 			return this.send('You must have at least two players to initiate a game.');
 		}
@@ -77,109 +88,117 @@ class Game {
 			round: this.data.round + 1,
 			id: this.id,
 		});
-		await this.postQuestion(this.data.category);
+		const question = await this.postQuestion(this.data.category);
 
-		return this.setStatus(Status.AWAITING_RESPONSES, {
-			$unset: { answers: '' },
+		return this.collection.updateOne(this._id, {
+			$set: {
+				status: Status.AWAITING_RESPONSES,
+				answers: question.a ? { [SYSTEM]: question.a } : {},
+			},
+			$unset: { voters: '' },
 			$inc: { round: 1 },
 		});
 	}
 
 	async startVoting() {
-		if (this.answerCount === 0) {
+		if (this.answerCount() === 0) {
 			await this.send('No answers were submitted this round!');
 
 			return this.endRound();
 		}
 
-		const seconds = (this.answerCount * 4) + 5;
+		await this.collection.updateOne(this._id, { $set: { status: Status.AWAITING_VOTES } });
+		await this.sync();
+		this.data.answers = Object.fromEntries(Object.entries(this.data.answers).sort(() => Math.random() - 0.5));
+		await this.collection.updateOne(this._id, { $set: { answers: this.data.answers } });
+
+		const seconds = (this.answerCount(false) * 4) + 5;
 		await this.client.timers.set(seconds * 1000, {
 			type: Timer.VOTE_TIMEOUT,
 			round: this.data.round,
 			id: this.id,
 		});
-		await this.setStatus(Status.AWAITING_VOTES);
 
 		return this.send({
-			content: `Everyone has **${seconds} seconds** to vote for the answer!`,
+			content: `Everyone has **${seconds} seconds** to vote **in DMs** for the answer!`,
 			embed: {
 				fields: Object.values(this.data.answers)
 					.map((answer, i) => ({
 						name: (i + 1).toString(),
-						value: answer.content,
+						value: answer.slice(0, 1024),
 						inline: true,
 					})),
+				color: Colors.ANSWERS,
 			},
 		});
 	}
 
 	async endRound() {
-		if (this.data.answers) {
+		if (this.data.voters && this.data.answers) {
 			await this.send({
 				embed: {
-					fields: Object.values(this.data.answers)
-						.sort((a, b) => a.voters.length - b.voters.length)
-						.map((answer, i) => ({
-							name: `${i === 0 ? '🎉 ' : ''}Votes: ${answer.voters.length}`,
-							value: answer.content,
+					fields: Object.entries(this.voteCounts)
+						.map(([id, count]) => ({
+							name: `Votes: ${count}`,
+							value: this.data.answers[id].slice(0, 1024),
 							inline: true,
 						}))
 						.slice(0, 25),
+					color: Colors.VOTES,
 				},
 			});
-			await this.collection.updateOne(this._id, {
-				$inc: Object.fromEntries(Object.entries(this.data.answers).map(([id, answer]) => [id, answer.voters.length])),
-			});
+
+			const $inc = {};
+			for (const [voter, votee] of Object.entries(this.data.voters)) {
+				const sys = votee === SYSTEM;
+				const user = sys ? voter : votee;
+				const key = `players.${user}.points`;
+				$inc[key] = ($inc[key] || 0) + (sys ? 2 : 1);
+			}
+
+			await this.collection.updateMany(this._id, { $inc });
 		}
 		return this.startRound();
 	}
 
-	async addAnswer(user, content) {
-		const res = await this.collection.updateOne(this._id, {
-			$set: { [`answers.${user}`]: { content, voters: [] } },
+	addAnswer(user, content) {
+		return this.collection.updateOne(this._id, {
+			$set: { [`answers.${user}`]: content },
 		});
-		if (res.modifiedCount === 0) return res;
-
-		if (this.answerCount === this.data.players.length) await this.startVoting();
-		return res;
 	}
 
-	async addVote(voter, votee) {
-		const res = await this.collection.updateOne(this._id, {
-			$addToSet: { [`answers.${votee}.voters`]: voter },
+	addVote(voter, votee) {
+		return this.collection.updateOne(this._id, {
+			$set: { [`voters.${voter}`]: votee },
 		});
-		if (res.modifiedCount === 0) return res;
-
-		if (this.voteCount === this.data.players.length) await this.endRound();
-		return res;
 	}
 
 	async postQuestion() {
-		const question = await this.client.questions.random(this.data.category || 'facts');
-		let author = null;
-		try {
-			author = await this.client.rest.users[question.creator_id].get();
-		} catch {}
+		const question = await this.client.questions.random();
+		const embed = { description: question.q, color: Colors.PROMPT };
 
-		const embed = { description: question.q };
-		if (author) {
-			embed.footer = `${author.username}#${author.discriminator}`;
+		if (question.creator_id) {
+			try {
+				const author = await this.client.rest.users[question.creator_id].get();
+				embed.footer = { content: `${author.username}#${author.discriminator}` };
+			} catch {}
+		} else {
+			embed.footer = { content: 'Static Question' };
 		}
 
-		return this.send({
-			content: `You have **${this.constructor.ANSWER_TIME / 1000} seconds** to answer!`,
+		await this.send({
+			content: `You have **${this.constructor.ANSWER_TIME / 1000} seconds** to answer **in DMs**!`,
 			embed,
 		});
+
+		return question;
 	}
 
 	async handleAnswer(ctx) {
-		const added = await this.addAnswer(ctx.msg.author.id, ctx.msg.content);
-		if (added.modifiedCount) {
-			if (this.answerCount >= this.data.players.length) {
-				await this.startVoting();
-			}
-
-			return ctx.reply(`Updated your answer! Back to the game: ${this.channelMention}`);
+		await this.addAnswer(ctx.msg.author.id, ctx.msg.content);
+		await this.sync();
+		if (this.answerCount() >= this.playerCount) {
+			await this.startVoting();
 		}
 
 		return ctx.reply(`Nice! Back to the game: ${this.channelMention}`);
@@ -187,24 +206,33 @@ class Game {
 
 	async handleVote(ctx) {
 		const index = parseInt(ctx.msg.content, 10);
-		if (isNaN(index) || index > this.answerCount || index < 1) {
-			return ctx.reply(`Please give a number between 1 and ${this.answerCount}!`);
+		const answerCount = this.answerCount(false);
+		if (isNaN(index) || index > answerCount || index < 1) {
+			return ctx.reply(`Please give a number between 1 and ${answerCount}!`);
 		}
 
-		const added = await this.addVote(ctx.msg.author.id, Object.keys(this.data.answers)[index - 1]);
-		if (added.modifiedCount) {
-			if (this.voteCount >= this.data.players.length) {
-				await this.endRound();
-			}
-
-			return ctx.reply(`Updated your vote! Back to the game: ${this.channelMention}`);
-		}
+		await this.addVote(ctx.msg.author.id, Object.keys(this.data.answers)[index - 1]);
+		// await this.sync();
+		// if (this.voteCount >= this.playerCount) {
+		// 	await this.endRound();
+		// }
 
 		return ctx.reply(`I'm sure you picked a winner! Back to the game: ${this.channelMention}`);
 	}
 
 	async stop() {
-		// TODO: end game.
+		await this.send({
+			content: 'GG!',
+			embed: {
+				fields: Object.entries(this.data.players)
+					.sort(([, a], [, b]) => b.points - a.points)
+					.map(([id, p]) => ({
+						name: `Points: ${p.points}`,
+						value: `<@${id}>`,
+						inline: true,
+					})),
+			},
+		});
 		await this.delete();
 	}
 

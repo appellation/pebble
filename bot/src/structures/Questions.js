@@ -5,11 +5,8 @@ class Questions {
 		this.collection = collection;
 	}
 
-	random(category) {
+	random() {
 		return this.collection.aggregate([
-			{ $match: { name: category } },
-			{ $unwind: '$questions' },
-			{ $replaceRoot: { newRoot: '$questions' } },
 			{
 				$match: {
 					$or: [

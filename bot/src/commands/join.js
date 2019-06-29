@@ -2,7 +2,7 @@ const { Status } = require('../constants/Game');
 
 module.exports = async ctx => {
 	const ongoing = await ctx.client.collections.games.findOne({
-		players: { id: ctx.msg.author.id },
+		[`players.${ctx.msg.author.id}`]: { $exists: true },
 	});
 	if (ongoing) {
 		if (ongoing.status !== Status.STARTING) return ctx.reply(`You are already playing a game in <#${ongoing.channel_id}>`);
@@ -13,13 +13,15 @@ module.exports = async ctx => {
 		);
 	}
 
-	await ctx.client.collections.games.updateOne({
+	const res = await ctx.client.collections.games.updateOne({
 		channel_id: ctx.msg.channel_id,
+		[`players.${ctx.msg.author.id}`]: { $exists: false },
 	}, {
-		$addToSet: {
-			players: { id: ctx.msg.author.id },
-		},
+		$set: { [`players.${ctx.msg.author.id}.points`]: 0 },
 	});
+	if (res.modifiedCount === 0) {
+		return ctx.reply('This channel has no ongoing game.');
+	}
 
 	return ctx.reply('You have joined the game!');
 };
