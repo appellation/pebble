@@ -2,6 +2,8 @@
 
 A Discord bot that allows you to play fibbage-esque games with other people in your Discord server.
 
+https://discordapp.com/api/oauth2/authorize?client_id=592062477252952075&permissions=0&scope=bot
+
 ## Installation
 
 1. Add a configuration file to each of the services as described in their respective README files.
